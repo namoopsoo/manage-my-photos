@@ -1,9 +1,11 @@
 import os
 import pathlib
-import s3
+import re
+from collections import Counter
 from tqdm import tqdm
 
-#def walk_dir(this_dir):
+import s3
+
 
 def relative(path, rebase=None, index=None):
     if rebase:
@@ -15,9 +17,6 @@ def relative(path, rebase=None, index=None):
 
 
 def main(local_base_dir, photo_dir_name, bucket):
-    # bucket = "photos-mmkay"
-    # local_base_dir = "/Users/michal/LeDropbox/Dropbox/myphotos"
-    # source_dir = "/Users/michal/LeDropbox/Dropbox/myphotos/2009"
     source_dir = pathlib.Path(local_base_dir) / photo_dir_name
     assert source_dir.exists()
 
@@ -52,4 +51,48 @@ def transfer_file(bucket, absolute_local_path, s3_path):
 
     out = s3.write_this(bucket, s3_path, content)
     return out
+
+
+def new_folders_for_year(base_dir):
+    year = base_dir.parts[-1]
+    assert re.match(r"^20\d\d$", year)
+    dirs = []
+    for month in range(1, 13):
+        folder = (base_dir / f"{year}-{str(month).zfill(2)}")
+        if not folder.exists():
+            dirs.append(folder)
+            os.mkdir(folder)
+    return dirs
+    
+def move_files(from_dir, to_dir, prefix, filetype, dry_run=False):
+    path = from_dir.glob(prefix + "*" + filetype)
+    files = sorted(list(path))
+    suffixes = Counter([x.suffix for x in files])
+    base_months = Counter([x.name[:7] for x in files])
+    if len(base_months) != 1:
+        print("quitting oops, multiple months, ", base_months)
+        return
+    base_month = list(dict(base_months).keys())[0]
+    year = base_month[:4]
+    new_dir = to_dir / year / base_month
+    if not new_dir.exists():
+        print("Dir doesnt exist", new_dir)
+        return
+
+    print(files[0].name, "...", files[-1].name, f"({dict(suffixes)})")
+    answer = input(f"Move {len(files)} files? [y/n]")
+    if answer != "y":
+        return
+
+    move_count = 0
+    did_not_overwrite_count = 0
+    for file in tqdm(files):
+        new_path = new_dir / file.name
+        if new_path.exists():
+            did_not_overwrite_count += 1
+        else:
+            if not dry_run:
+                file.replace(new_path)
+                move_count += 1
+    print("Done moving", move_count, f"files, ({did_not_overwrite_count} already existed)")
 
