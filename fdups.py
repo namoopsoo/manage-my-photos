@@ -37,7 +37,7 @@ def get_file_hash(full_path):
         return None
 
 
-def check_for_duplicates(paths, ignore_extensions=None):
+def check_for_duplicates(paths, ignore_extensions=None, explicit_extensions=None):
     hashes = {}
     duplicates_list = []
     oserror_list = []
@@ -46,6 +46,8 @@ def check_for_duplicates(paths, ignore_extensions=None):
             for filename in sorted(filenames):
                 extension = filename.split(".")[-1]
                 if extension.lower() in ignore_extensions:
+                    continue
+                if extension.lower() not in explicit_extensions:
                     continue
                 full_path = os.path.join(dirpath, filename)
                 file_digest = get_file_hash(full_path)
@@ -68,6 +70,7 @@ def check_for_duplicates(paths, ignore_extensions=None):
 
 
 def remove_files(files_list):
+    # delete
     for filepath in set(files_list):
         try:
             os.remove(filepath)
@@ -89,6 +92,7 @@ if __name__ == '__main__':
         duplicates_list, hash_index, oserror_list = check_for_duplicates(
             sys.argv[1:],
             ignore_extensions=["mp4", "avi", "mov"],
+            explicit_extensions=["png", "jpg"]
         )
         dump_index(hash_index)
         import pdb; pdb.set_trace()
