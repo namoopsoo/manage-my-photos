@@ -2,6 +2,7 @@ import argparse
 import os
 import json
 import re
+import shlex
 import subprocess
 from imagededup.methods import PHash
 from pathlib import Path
@@ -9,6 +10,7 @@ from collections import defaultdict
 from PIL import Image
 from uuid import uuid4
 from datetime import datetime
+from tqdm import tqdm
 import pytz
 
 import fdups
@@ -157,7 +159,9 @@ def invoke_one_image(image_absolute_path):
       --image_path /mnt/Data/{image_file}
         """
     )
-    out = subprocess.run(command.split(), capture_output=True)
+    out = subprocess.run(shlex.split(command), capture_output=True)
+    if 'model_eval.py: error' in out.stdout.decode("utf-8"):
+        raise Exception("Oops error," + out.stdout.decode("utf-8"))
 
     out_lines = out.stdout.decode("utf-8").split("\r\n")
     prediction = out_lines[-3].split()[-1]
@@ -167,17 +171,32 @@ def invoke_one_image(image_absolute_path):
 
 
 def move_food(main_photo_dir, photo_dirs, food_dir):
-    workdir = Path(main_photo_dir)
+    assert main_photo_dir.is_dir()
+    assert food_dir.is_dir()
     out_vec = []
     for folder in photo_dirs:
-        source_dir = (workdir / folder)
+        source_dir = (main_photo_dir / folder)
         assert source_dir.is_dir()
 
         for image_path in tqdm(source_dir.glob("*.jpg")):
             out = invoke_one_image(image_path)
             print(image_path.name, out)
-            out_vec.append({"image": str(image_path), "pred": out})
+            info = {"image": str(image_path), "pred": out}
+            if out == "food":
+                new_path = food_dir / image_path.name
+                if new_path.exists():
+                    print("weird,", new_path, "already exists, not replacing..")
+                    info["action"] = "already_existed_no_action"
+                else:
+                    image_path.replace(new_path)
+                    info["action"] = "moved"
+            else:
+                ...
+                ...
+            out_vec.append(info)
     out_vec
+    loc = main_photo_dir / f"move-log-{utc_ts(utc_now())}.json"
+    loc.write_text(json.dumps({"out_vec": out_vec}))
     ...
     
     
