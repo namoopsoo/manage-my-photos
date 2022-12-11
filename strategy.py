@@ -2,13 +2,23 @@ import argparse
 import os
 import json
 import re
+import subprocess
 from imagededup.methods import PHash
 from pathlib import Path
 from collections import defaultdict
 from PIL import Image
 from uuid import uuid4
+from datetime import datetime
+import pytz
 
 import fdups
+
+def utc_now():
+    return datetime.utcnow().replace(tzinfo=pytz.UTC)
+
+def utc_ts(dt):
+    return dt.strftime("%Y-%m-%dT%H%M%SZ")
+
 
 def bake_options():
     return [
@@ -38,6 +48,14 @@ def bake_options():
                 {'action': 'store',
                     'help': 'Use this dir for dumping .png files, which are probably screenshots I don\'t want in my photo collection.'},],
 
+
+            [['--action', '-a'],
+                {'action': 'store',
+                    'help': 'perform deduping, or move phood photos, say, ("dedupe", "move-food")'},],
+
+            [['--food-dir', '-F'],
+                {'action': 'store',
+                    'help': 'what dir to move food to '},],
 
                 ]
 
@@ -82,13 +100,11 @@ def which_delete(v):
         delete_these = list(set(v) - set([v[0]]))
         return delete_these, v[0]
        
-def main(main_photo_dir):
+def main(main_photo_dir, photo_dirs):
     phasher = PHash()
     all_vec = []
     workdir = Path(main_photo_dir)
-    for folder in ["2021-01", "2021-02", "2021-03", 
-                   "2021-04", "2021-05", "2021-06"
-                  ]:
+    for folder in photo_dirs:
         assert (workdir / folder).is_dir()
         out_vec = dedupe_folder(phasher, workdir / folder)
         all_vec.extend(out_vec)
@@ -107,26 +123,70 @@ def move_pngs(main_photo_dir, photo_dirs, dir_for_review):
                     hash1 = fdups.get_file_hash(file)
                     hash2 = fdups.get_file_hash(new_path)
                     if hash1 == hash2:
-                        # delete the first then, 
+                        # Delete the first then, 
                         to_delete.append(str(file))
                     else:
-                        # rename first. 
+                        # Rename first. 
                         new_path = dir_for_review / (file.stem + f"-{str(uuid4())[:8]}{file.suffix}")
-                        # renamed.append([file.name, new_path.name])
-                file.replace(new_path)
-                moved.append([file.name, new_path.name])
-                ...
+                        file.replace(new_path)
+                        moved.append([str(file), str(new_path)])
+                else:
+                    file.replace(new_path)
+                    moved.append([str(file), str(new_path)])
 
-            ...
-        ...
+    loc = main_photo_dir / f"move-log-{utc_ts(utc_now())}.json"
+    loc.write_text(json.dumps({"to_delete": to_delete, "moved": moved}))
+
+    for file in to_delete:
+        os.remove(file)
+
+
+def invoke_one_image(image_absolute_path):
+    base_dir = image_absolute_path.parent
+    image_file = image_absolute_path.name
+    assert image_absolute_path.exists()
+
+    command = (
+        f"""docker 
+        run -i -t 
+        -v /Users/michal/Dropbox/Code/repo/food-not-food:/home   \
+      -v {base_dir}:/mnt/Data  \
+      -w /home  \
+      food-not-food python model_eval/model_eval.py \
+      --model_path models/2022-03-18_food_not_food_model_efficientnet_lite0_v1.tflite \
+      --image_path /mnt/Data/{image_file}
+        """
+    )
+    out = subprocess.run(command.split(), capture_output=True)
+
+    out_lines = out.stdout.decode("utf-8").split("\r\n")
+    prediction = out_lines[-3].split()[-1]
+    pred_logits_str = ' '.join(out_lines[-2].split()[-2:])
+    return (prediction, pred_logits_str)
+
+
+
+def move_food(main_photo_dir, photo_dirs, food_dir):
+    workdir = Path(main_photo_dir)
+    out_vec = []
+    for folder in photo_dirs:
+        source_dir = (workdir / folder)
+        assert source_dir.is_dir()
+
+        for image_path in tqdm(source_dir.glob("*.jpg")):
+            out = invoke_one_image(image_path)
+            print(image_path.name, out)
+            out_vec.append({"image": str(image_path), "pred": out})
+    out_vec
     ...
-        
+    
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     [parser.add_argument(*x[0], **x[1]) for x in bake_options()]
 
     args = dict(vars(parser.parse_args()))
+    print("args", args)
     if args.get("debug"):
         import ipdb; ipdb.set_trace()
 
@@ -139,8 +199,17 @@ if __name__ == "__main__":
         for folder in photo_dirs:
             assert (main_photo_dir / folder).is_dir()
 
-    print("args", args)
-    if dir_for_review := Path(args.get("dir_for_review")):
-        move_pngs(main_photo_dir, photo_dirs, dir_for_review)
+    if args.get("action") == "dedupe":
+        ...
+        #all_vec = main()
+    elif args.get("action") == "move-pngs":
+        if dir_for_review := Path(args.get("dir_for_review")):
+            move_pngs(main_photo_dir, photo_dirs, dir_for_review)
 
-    #all_vec = main()
+    elif args.get("action") == "move-food":
+        food_dir = args["food_dir"]
+        move_food(main_photo_dir, photo_dirs, food_dir)
+    else:
+        raise Exception("unknown action")
+
+
