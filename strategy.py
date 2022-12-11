@@ -156,7 +156,7 @@ def invoke_one_image(image_absolute_path):
       -w /home  \
       food-not-food python model_eval/model_eval.py \
       --model_path models/2022-03-18_food_not_food_model_efficientnet_lite0_v1.tflite \
-      --image_path /mnt/Data/{image_file}
+      --image_path "/mnt/Data/{image_file}" 
         """
     )
     out = subprocess.run(shlex.split(command), capture_output=True)
@@ -171,6 +171,8 @@ def invoke_one_image(image_absolute_path):
 
 
 def move_food(main_photo_dir, photo_dirs, food_dir):
+
+    import ipdb; ipdb.set_trace()
     assert main_photo_dir.is_dir()
     assert food_dir.is_dir()
     out_vec = []
@@ -181,8 +183,9 @@ def move_food(main_photo_dir, photo_dirs, food_dir):
         for image_path in tqdm(source_dir.glob("*.jpg")):
             out = invoke_one_image(image_path)
             print(image_path.name, out)
+            (prediction, pred_logits_str) = out
             info = {"image": str(image_path), "pred": out}
-            if out == "food":
+            if prediction == "food":
                 new_path = food_dir / image_path.name
                 if new_path.exists():
                     print("weird,", new_path, "already exists, not replacing..")
@@ -226,7 +229,7 @@ if __name__ == "__main__":
             move_pngs(main_photo_dir, photo_dirs, dir_for_review)
 
     elif args.get("action") == "move-food":
-        food_dir = args["food_dir"]
+        food_dir = Path(args["food_dir"])
         move_food(main_photo_dir, photo_dirs, food_dir)
     else:
         raise Exception("unknown action")
