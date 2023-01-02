@@ -20,7 +20,7 @@ import fdups
 
 logger = logging.getLogger(__name__)
 c_handler = logging.StreamHandler()
-c_handler.setLevel(logging.ERROR)
+c_handler.setLevel(logging.INFO)
 
 c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
@@ -76,7 +76,8 @@ def bake_options():
 
 
 def get_file_size(path):
-    return round(path.stat().st_size / 1024 / 1024, 1)
+    return path.stat().st_size
+    # return round(path.stat().st_size / 1024 / 1024, 1)
   
 
 def dedupe_folder(phasher, folder):
@@ -88,7 +89,7 @@ def dedupe_folder(phasher, folder):
     smallest = sorted(sizes, key=lambda x: x[1])[0]
     if smallest[1] == 0:
         print(smallest)
-        logger.error("folder", folder, "has 0Byte files, so not ready yet.")
+        logger.error(f"folder {folder} has 0Byte files, so not ready yet.")
         return
     
     out_vec = []
@@ -138,6 +139,7 @@ def dedupe_action(main_photo_dir, photo_dirs):
             deleted_count = sum([len(x["deleted"]) for x in out_vec if "deleted" in x])
             kept_count = sum([1 for x in out_vec if "kept" in x])
             logger.info(f"folder {folder} {deleted_count} deleted, {kept_count} kept.")
+            print(f"folder {folder} {deleted_count} deleted, {kept_count} kept.")
         ...
 
     logger.info("done")
