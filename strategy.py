@@ -2,6 +2,7 @@ import argparse
 import os
 import json
 import re
+import requests
 import shlex
 import subprocess
 from imagededup.methods import PHash
@@ -181,26 +182,12 @@ def invoke_one_image(image_absolute_path):
     image_file = image_absolute_path.name
     assert image_absolute_path.exists()
 
-    command = (
-        f"""docker 
-        run -i -t 
-        -v /Users/michal/Dropbox/Code/repo/food-not-food:/home   \
-      -v {base_dir}:/mnt/Data  \
-      -w /home  \
-      food-not-food python model_eval/model_eval.py \
-      --model_path models/2022-03-18_food_not_food_model_efficientnet_lite0_v1.tflite \
-      --image_path "/mnt/Data/{image_file}" 
-        """
-    )
-    out = subprocess.run(shlex.split(command), capture_output=True)
-    if 'model_eval.py: error' in out.stdout.decode("utf-8"):
-        raise Exception("Oops error," + out.stdout.decode("utf-8"))
+    out = requests.post("http://0.0.0.0:8080/invocations", 
+        json=[str(image_absolute_path)])
 
-    out_lines = out.stdout.decode("utf-8").split("\r\n")
-    prediction = out_lines[-3].split()[-1]
-    pred_logits_str = ' '.join(out_lines[-2].split()[-2:])
-    return (prediction, pred_logits_str)
-
+    print(out.status_code, out.text)
+    result = out.json()["result"][0]
+    return result["prediction"], result["raw"]
 
 
 def move_food(main_photo_dir, photo_dirs, food_dir):
@@ -214,7 +201,11 @@ def move_food(main_photo_dir, photo_dirs, food_dir):
         # for suffix in ["JPG", "jpg"]:
         #     for file in (main_photo_dir / folder).glob(f"*.{suffix}"):
 
-        for image_path in tqdm(source_dir.glob("*.JPG")):
+        extensions = ["jpg", "JPG", "jpeg", "JPEG"]
+        files = reduce(lambda x, y: x + y,
+            [glob(str(source_dir / f"*.{extension}")) for extension in extensions])
+
+        for image_path in tqdm(files):
             out = invoke_one_image(image_path)
             print(image_path.name, out)
             (prediction, pred_logits_str) = out
