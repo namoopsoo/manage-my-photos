@@ -11,9 +11,20 @@ from PIL import Image
 from uuid import uuid4
 from datetime import datetime
 from tqdm import tqdm
+import logging
 import pytz
 
 import fdups
+
+logger = logging.getLogger(__name__)
+c_handler = logging.StreamHandler()
+c_handler.setLevel(logging.ERROR)
+
+c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+c_handler.setFormatter(c_format)
+
+# Add handlers to the logger
+logger.addHandler(c_handler)
 
 def utc_now():
     return datetime.utcnow().replace(tzinfo=pytz.UTC)
@@ -67,8 +78,19 @@ def get_file_size(path):
   
 
 def dedupe_folder(phasher, folder):
-    # TODO might assert files exist and sizes are at least 1 meg.   
+    # Assert files exist and sizes are at least 1 meg.   
+    extensions = ["jpg", "JPG", "jpeg", "JPEG"]
+    files = reduce(lambda x, y: x + y,
+        [glob(str(Path(workdir) / f"*.{extension}")) for extension in extensions])
+    sizes = [[x, strat.get_file_size(Path(x))] for x in files]
+    smallest = sorted(sizes, key=lambda x: x[1])[0]
+    if smallest[1] == 0:
+        print(smallest)
+        logger.error("folder", folder, "has 0Byte files, so not ready yet.")
+        return
+    
     out_vec = []
+    ... 
     encodings = phasher.encode_images(image_dir=folder)
     clashes = defaultdict(list)
     len([clashes[v].append(k) for (k, v) in encodings.items()])
@@ -102,7 +124,7 @@ def which_delete(v):
         delete_these = list(set(v) - set([v[0]]))
         return delete_these, v[0]
        
-def main(main_photo_dir, photo_dirs):
+def dedupe_action(main_photo_dir, photo_dirs):
     phasher = PHash()
     all_vec = []
     workdir = Path(main_photo_dir)
@@ -110,6 +132,13 @@ def main(main_photo_dir, photo_dirs):
         assert (workdir / folder).is_dir()
         out_vec = dedupe_folder(phasher, workdir / folder)
         all_vec.extend(out_vec)
+        if out_vec:
+            deleted_count = sum([len(x["deleted"]) for x in out_vec if "deleted" in x])
+            kept_count = sum([1 for x in out_vec if "kept" in x])
+            logger.info(f"folder {folder} {deleted_count} deleted, {kept_count} kept.")
+        ...
+
+    logger.info("done")
     return all_vec
 
     
@@ -172,15 +201,16 @@ def invoke_one_image(image_absolute_path):
 
 def move_food(main_photo_dir, photo_dirs, food_dir):
 
-    import ipdb; ipdb.set_trace()
     assert main_photo_dir.is_dir()
     assert food_dir.is_dir()
     out_vec = []
     for folder in photo_dirs:
         source_dir = (main_photo_dir / folder)
         assert source_dir.is_dir()
+        # for suffix in ["JPG", "jpg"]:
+        #     for file in (main_photo_dir / folder).glob(f"*.{suffix}"):
 
-        for image_path in tqdm(source_dir.glob("*.jpg")):
+        for image_path in tqdm(source_dir.glob("*.JPG")):
             out = invoke_one_image(image_path)
             print(image_path.name, out)
             (prediction, pred_logits_str) = out
@@ -222,8 +252,8 @@ if __name__ == "__main__":
             assert (main_photo_dir / folder).is_dir()
 
     if args.get("action") == "dedupe":
-        ...
-        #all_vec = main()
+        all_vec = dedupe_action(main_photo_dir, photo_dirs)
+
     elif args.get("action") == "move-pngs":
         if dir_for_review := Path(args.get("dir_for_review")):
             move_pngs(main_photo_dir, photo_dirs, dir_for_review)
