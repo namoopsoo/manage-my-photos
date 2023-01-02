@@ -177,13 +177,12 @@ def move_pngs(main_photo_dir, photo_dirs, dir_for_review):
         os.remove(file)
 
 
-def invoke_one_image(image_absolute_path):
-    base_dir = image_absolute_path.parent
+def invoke_one_image(image_absolute_path, base_dir):
     image_file = image_absolute_path.name
     assert image_absolute_path.exists()
 
     out = requests.post("http://0.0.0.0:8080/invocations", 
-        json=[str(image_absolute_path)])
+        json=[str(image_absolute_path.relative_to(base_dir))])
 
     print(out.status_code, out.text)
     result = out.json()["result"][0]
@@ -206,7 +205,8 @@ def move_food(main_photo_dir, photo_dirs, food_dir):
             [glob(str(source_dir / f"*.{extension}")) for extension in extensions])
 
         for image_path in tqdm(files):
-            out = invoke_one_image(image_path)
+            image_path = Path(image_path)
+            out = invoke_one_image(image_path, main_photo_dir)
             print(image_path.name, out)
             (prediction, pred_logits_str) = out
             info = {"image": str(image_path), "pred": out}
@@ -222,6 +222,7 @@ def move_food(main_photo_dir, photo_dirs, food_dir):
                 ...
                 ...
             out_vec.append(info)
+        ...
     out_vec
     loc = main_photo_dir / f"move-log-{utc_ts(utc_now())}.json"
     loc.write_text(json.dumps({"out_vec": out_vec}))
