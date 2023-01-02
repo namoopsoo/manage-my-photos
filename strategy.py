@@ -5,6 +5,8 @@ import re
 import shlex
 import subprocess
 from imagededup.methods import PHash
+from functools import reduce
+from glob import glob
 from pathlib import Path
 from collections import defaultdict
 from PIL import Image
@@ -81,8 +83,8 @@ def dedupe_folder(phasher, folder):
     # Assert files exist and sizes are at least 1 meg.   
     extensions = ["jpg", "JPG", "jpeg", "JPEG"]
     files = reduce(lambda x, y: x + y,
-        [glob(str(Path(workdir) / f"*.{extension}")) for extension in extensions])
-    sizes = [[x, strat.get_file_size(Path(x))] for x in files]
+        [glob(str(Path(folder)/ f"*.{extension}")) for extension in extensions])
+    sizes = [[x, get_file_size(Path(x))] for x in files]
     smallest = sorted(sizes, key=lambda x: x[1])[0]
     if smallest[1] == 0:
         print(smallest)
@@ -99,9 +101,9 @@ def dedupe_folder(phasher, folder):
         if len(v) > 1:
             delete_these, keep = which_delete(v)
             if delete_these and all(
-                    [(folder / x).is_file() for x in delete_these]):
+                    [(Path(folder) / x).is_file() for x in delete_these]):
                 for x in delete_these:
-                    os.remove(folder / x)
+                    os.remove(Path(folder) / x)
                 out_vec.append({"outcome": "deduped",
                                "deleted": delete_these, "kept": keep})
             else:
@@ -130,7 +132,7 @@ def dedupe_action(main_photo_dir, photo_dirs):
     workdir = Path(main_photo_dir)
     for folder in photo_dirs:
         assert (workdir / folder).is_dir()
-        out_vec = dedupe_folder(phasher, workdir / folder)
+        out_vec = dedupe_folder(phasher, str(workdir / folder))
         all_vec.extend(out_vec)
         if out_vec:
             deleted_count = sum([len(x["deleted"]) for x in out_vec if "deleted" in x])
@@ -251,6 +253,7 @@ if __name__ == "__main__":
         for folder in photo_dirs:
             assert (main_photo_dir / folder).is_dir()
 
+    import ipdb; ipdb.set_trace()
     if args.get("action") == "dedupe":
         all_vec = dedupe_action(main_photo_dir, photo_dirs)
 
