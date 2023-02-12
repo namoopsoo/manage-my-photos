@@ -154,7 +154,8 @@ def move_pngs(main_photo_dir, photo_dirs, dir_for_review):
     for folder in photo_dirs:
         for suffix in ["PNG", "png"]:
             for file in (main_photo_dir / folder).glob(f"*.{suffix}"):
-                new_path = dir_for_review / file.name
+                new_path = dir_for_review / folder / file.name
+                new_path.parent.mkdir(parents=True, exist_ok=True)
                 if new_path.exists():
                     hash1 = fdups.get_file_hash(file)
                     hash2 = fdups.get_file_hash(new_path)
@@ -163,7 +164,11 @@ def move_pngs(main_photo_dir, photo_dirs, dir_for_review):
                         to_delete.append(str(file))
                     else:
                         # Rename first. 
-                        new_path = dir_for_review / (file.stem + f"-{str(uuid4())[:8]}{file.suffix}")
+                        new_path = dir_for_review / folder / (file.stem + f"-{str(uuid4())[:8]}{file.suffix}")
+
+                        # Make any parent dirs
+                        new_path.parent.mkdir(parents=True, exist_ok=True)
+
                         file.replace(new_path)
                         moved.append([str(file), str(new_path)])
                 else:
@@ -184,7 +189,8 @@ def invoke_one_image(image_absolute_path, base_dir):
     out = requests.post("http://0.0.0.0:8080/invocations", 
         json=[str(image_absolute_path.relative_to(base_dir))])
 
-    print(out.status_code, out.text)
+    if out.status_code != 200:
+        print(out.status_code, out.text)
     result = out.json()["result"][0]
     return result["prediction"], result["raw"]
 
@@ -197,8 +203,6 @@ def move_food(main_photo_dir, photo_dirs, food_dir):
     for folder in photo_dirs:
         source_dir = (main_photo_dir / folder)
         assert source_dir.is_dir()
-        # for suffix in ["JPG", "jpg"]:
-        #     for file in (main_photo_dir / folder).glob(f"*.{suffix}"):
 
         extensions = ["jpg", "JPG", "jpeg", "JPEG"]
         files = reduce(lambda x, y: x + y,
@@ -211,7 +215,11 @@ def move_food(main_photo_dir, photo_dirs, food_dir):
             (prediction, pred_logits_str) = out
             info = {"image": str(image_path), "pred": out}
             if prediction == "food":
-                new_path = food_dir / image_path.name
+                new_path = food_dir / folder / image_path.name
+
+                # Make parent dirs.
+                new_path.parent.mkdir(parents=True, exist_ok=True)
+
                 if new_path.exists():
                     print("weird,", new_path, "already exists, not replacing..")
                     info["action"] = "already_existed_no_action"
@@ -228,6 +236,14 @@ def move_food(main_photo_dir, photo_dirs, food_dir):
     loc.write_text(json.dumps({"out_vec": out_vec}))
     ...
     
+
+def ping_server():
+    out = requests.get("http://0.0.0.0:8080/ping")
+    if out.status_code != 200:
+        print(out.status_code, out.text)
+        return False
+    return True
+
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -248,17 +264,28 @@ if __name__ == "__main__":
             assert (main_photo_dir / folder).is_dir()
 
     import ipdb; ipdb.set_trace()
-    if args.get("action") == "dedupe":
-        all_vec = dedupe_action(main_photo_dir, photo_dirs)
 
-    elif args.get("action") == "move-pngs":
-        if dir_for_review := Path(args.get("dir_for_review")):
+    if not ping_server():
+        raise Exception("Server health check failed")
+
+
+    all_actions = ["move-pngs", "dedupe", "move-food"]
+    if args.get("action") == "all":
+        actions = all_actions
+    elif args.get("action") in all_actions:
+        actions = [args.get("action")]
+
+    for action in actions:
+        if action == "dedupe":
+            all_vec = dedupe_action(main_photo_dir, photo_dirs)
+        elif action == "move-pngs":
+            dir_for_review = Path(args.get("dir_for_review"))
             move_pngs(main_photo_dir, photo_dirs, dir_for_review)
 
-    elif args.get("action") == "move-food":
-        food_dir = Path(args["food_dir"])
-        move_food(main_photo_dir, photo_dirs, food_dir)
-    else:
-        raise Exception("unknown action")
+        elif action == "move-food":
+            food_dir = Path(args["food_dir"])
+            move_food(main_photo_dir, photo_dirs, food_dir)
+        else:
+            raise Exception("unknown action")
 
 
