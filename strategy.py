@@ -48,7 +48,9 @@ def bake_options():
                 ],
             [['--dry-run', '-D'],
                 {'action': 'store_true',
-                    'help': 'Dry run. Just print the command.'},],
+                    'help': 'Dry run. Just print the command.',
+                 },],
+    
 
             [['--main-photo-dir', '-m'],
                 {'action': 'store',
@@ -67,7 +69,9 @@ def bake_options():
 
             [['--action', '-a'],
                 {'action': 'store',
-                    'help': 'perform deduping, or move phood photos, say, ("dedupe", "move-food")'},],
+                    'help': 'choose between deduping, or move phood photos, say',
+                    'choices': ["move-pngs", "dedupe", "move-food", "all"],
+                 },],
 
             [['--food-dir', '-F'],
                 {'action': 'store',
