@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from glob import glob
 import flask
 import json
 import os
@@ -29,8 +30,10 @@ image_files = Path(IMAGE_FOLDER).glob("*.jpg")
 
 
 extensions = ["jpg", "JPG", "jpeg", "JPEG"]
-image_files = reduce(lambda x, y: x + y,
-    [glob(str(IMAGE_FOLDER / f"*.{extension}")) for extension in extensions])
+image_file_paths = reduce(lambda x, y: x + y,
+    [glob(str(Path(IMAGE_FOLDER) / f"*.{extension}")) 
+     for extension in extensions])
+image_files = [Path(x).name for x in image_file_paths]
 
 # Initialize the current index
 current_index = 0
@@ -80,14 +83,11 @@ def move_image():
     if not filename or not choice:
         payload = {"message": "Invalid request data"}
         return make_response(payload)
-    # return jsonify(payload)
-
-    import ipdb; ipdb.set_trace()
 
     # Check if the source file exists
     src_path = Path(IMAGE_FOLDER) / filename
     if not src_path.exists():
-        return jsonify({"message": "File not found"})
+        return jsonify({"message": "File not found"})  # TODO handle this.
 
     if choice == "photo-library":
         return jsonify({"message": "File kept!"})
@@ -97,9 +97,10 @@ def move_image():
         return jsonify({"message": f"{src_path} trashed."})
 
     if choice == "for-logseq":
+        dest_path = Path(FOR_LOGSEQ_FOLDER)  / filename
 
-    # Set destination path
-    dest_path = Path(DESTINATION_FOLDER) / choice / filename
+    if choice == "other":
+        dest_path = Path(DESTINATION_FOLDER) / filename
 
     # Create the destination directory if it does not exist
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
