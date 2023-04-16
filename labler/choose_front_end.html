@@ -2,17 +2,47 @@
 <html>
   <head>
     <title>Image Chooser</title>
+
+    <style>
+        body {
+            width: 90%;
+            max-width: 900px;
+            margin: 2em auto;
+            font: .9em/1.2 Arial, Helvetica, sans-serif;
+        }
+        .container > div {
+            border-radius: 5px;
+            padding: 10px;
+            background-color: rgb(207,232,220);
+            border: 2px solid rgb(79,185,227);
+            display: grid;
+            grid-template-columns: 200px 200px 200px;
+        }
+
+    </style>
   </head>
   <body>
-    <h1>Image Chooser</h1>
-    <div id="image-container"></div>
-    <label for="choice">Enter your choice:</label>
-    <input type="text" id="choice" name="choice">
-    <button id="submit" onclick="submitChoice()">Submit</button>
-    <button id="next" onclick="displayNextImage()">Fetch Next</button>
+    <div class="container">
+      <div>
+        <h1>Image Chooser</h1>
+      </div>
+      <div id="image-title"></div>
+      <div>
+        <label for="choice">Enter your choice:</label>
+        <input type="text" id="choice" name="choice">
+        <button id="submit" onclick="submitChoice()">Submit</button>
+        <button id="next" onclick="displayNextImage()">Fetch Next</button>
+      </div>
+      <div id="image-container"></div>
+      <div>
+          hmm
+      </div>
+    </div>
     <script>
       // Get a reference to the image container
       const imageContainer = document.getElementById("image-container");
+      const imageTitle = document.getElementById("image-title");
+      const localDir = "file:///Users/michal/Dropbox/myphotos/2019/2019-04";
 
       // Create a function to display the next image
       async function displayNextImage() {
@@ -31,14 +61,16 @@
         console.log("sent GET");
 
         // Check if there are no more images to display
-        if ("message" in jsonData) {
-          imageContainer.innerHTML = `<p>${jsonData.message}</p>`;
-          return;
+        if ("filename" in jsonData) {
+          imageTitle.innerHTML = `<p>${jsonData.filename}</p>`;
         };
 
         // Display the image
-        //const imageUrl = `file:///path/to/image/folder/${data.filename}`;
-        // imageContainer.innerHTML = `<img src="${imageUrl}" alt="${data.filename}">`;
+        const imageUrl = `${localDir}/${jsonData.filename}`;
+        console.log("imageUrl" + imageUrl);
+        imageContainer.innerHTML = `<img src="${imageUrl}" alt="${jsonData.filename}">`;
+
+        return;
       }
 
       // Create a function to submit the choice
