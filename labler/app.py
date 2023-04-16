@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 import flask
 import json
 import os
+from functools import reduce
 from pathlib import Path
 
 from flask_cors import CORS
@@ -9,16 +10,27 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+
 # Set the path to the image folder
+IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos"
 IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos/2019/2019-04"
 
 # Set the path to the destination folder
 DESTINATION_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos" 
-# /Users/michal/Dropbox/myphotos/not-for-icloud-photos/2019/2019-04
+DESTINATION_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos/2019/2019-04"
 # /Users/michal/Dropbox/FoodJournal/2019/2019-04
 
+FOR_LOGSEQ_FOLDER = "/Users/michal/Dropbox/myphotos/for-logseq/2019/2019-04"
+
+FOOD_JOURNAL = "/Users/michal/Dropbox/FoodJournal"
+
 # Get the list of image files
-image_files = os.listdir(IMAGE_FOLDER)
+image_files = Path(IMAGE_FOLDER).glob("*.jpg")
+
+
+extensions = ["jpg", "JPG", "jpeg", "JPEG"]
+image_files = reduce(lambda x, y: x + y,
+    [glob(str(IMAGE_FOLDER / f"*.{extension}")) for extension in extensions])
 
 # Initialize the current index
 current_index = 0
@@ -77,12 +89,14 @@ def move_image():
     if not src_path.exists():
         return jsonify({"message": "File not found"})
 
-    if choice == "keep":
+    if choice == "photo-library":
         return jsonify({"message": "File kept!"})
 
     if choice == "trash":
         os.remove(str(src_path))
         return jsonify({"message": f"{src_path} trashed."})
+
+    if choice == "for-logseq":
 
     # Set destination path
     dest_path = Path(DESTINATION_FOLDER) / choice / filename
