@@ -1,6 +1,6 @@
 
-# Slightly reduce photo chaos
-This repo uses others' amazing tools to help me with my photo glut. Working on a mini blog post to better describe the motivation. 
+# Slightly reduce your photo chaos
+This repo uses others' amazing tools to help me with your photo glut. Working on a mini blog post to better describe the motivation. 
 
 But the basic use case is if you have a main flat file directory setup where all your photos live, fed in by something like a Dropbox sync from your phone. And you want to clean up your main photo directory to be ready for showing off to other people. That means free of screenshots (`.png` files), and free of other photos that probably other people do not care about such as photos of your food ! 
 
@@ -14,6 +14,7 @@ And Daniel Bourke's Food not Food repo , https://github.com/mrdbourke/food-not-f
 
 ## Why do you need to dedupe?
 Before periodically deleting photos from my phone, I would prefer to also use the "Image Capture.app" to upload photos as a sanity check in case Dropbox did not sync everything. Uploading with "Image Capture.app" produces different filenames than on Dropbox and hence the duplication. I think after enabling "icloud photos" on my iphone, the need to manually delete photos from the phone went away for the most part.
+
 
 But deduping also comes in handy for historically all the duplicated photos from the past as well as when you get photos from other people who might be giving you back your own photos say.
 

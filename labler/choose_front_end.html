@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Image Chooser</title>
+  </head>
+  <body>
+    <h1>Image Chooser</h1>
+    <div id="image-container"></div>
+    <label for="choice">Enter your choice:</label>
+    <input type="text" id="choice" name="choice">
+    <button id="submit" onclick="submitChoice()">Submit</button>
+    <button id="next" onclick="displayNextImage()">Fetch Next</button>
+    <script>
+      // Get a reference to the image container
+      const imageContainer = document.getElementById("image-container");
+
+      // Create a function to display the next image
+      async function displayNextImage() {
+        // Make a GET request to the Flask app to get the next image filename
+        const response = await fetch("http://127.0.0.1:5000/", {
+            mode: "cors", // dont use "no-cors" !
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+        });
+        console.log(response);
+
+        const jsonData = await response.json();
+        console.log(jsonData);
+        console.log("sent GET");
+
+        // Check if there are no more images to display
+        if ("message" in jsonData) {
+          imageContainer.innerHTML = `<p>${jsonData.message}</p>`;
+          return;
+        };
+
+        // Display the image
+        //const imageUrl = `file:///path/to/image/folder/${data.filename}`;
+        // imageContainer.innerHTML = `<img src="${imageUrl}" alt="${data.filename}">`;
+      }
+
+      // Create a function to submit the choice
+      async function submitChoice() {
+      }
+
+    </script>
+  </body>
+</html>
+
