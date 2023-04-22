@@ -17,11 +17,11 @@ IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos/2019/2019-04"
 IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos"
 
 # Set the path to the destination folder
-DESTINATION_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos" 
 DESTINATION_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos/2019/2019-04"
+DESTINATION_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos" 
 # /Users/michal/Dropbox/FoodJournal/2019/2019-04
 
-FOR_LOGSEQ_FOLDER = "/Users/michal/Dropbox/myphotos/for-logseq/2019/2019-04"
+FOR_LOGSEQ_FOLDER = "/Users/michal/Dropbox/myphotos/for-logseq"
 
 # trips 
 TRIPS_FOLDER = "/Users/michal/Dropbox/MyTrips"
@@ -30,9 +30,7 @@ TRIPS_FOLDER = "/Users/michal/Dropbox/MyTrips"
 THINGS_FOLDER = "/Users/michal/Dropbox/ThingsDocuments"
 
 # receipts 
-RECEIPTS_FOLDER = "/Users/michal/Dropbox/Receipts "
-
-
+RECEIPTS_FOLDER = "/Users/michal/Dropbox/Receipts"
 
 FOOD_JOURNAL = "/Users/michal/Dropbox/FoodJournal"
 
@@ -43,7 +41,9 @@ image_files = (Path(IMAGE_FOLDER) / "2019" / "2019-04"
 
 extensions = ["jpg", "JPG", "jpeg", "JPEG"]
 image_file_paths = reduce(lambda x, y: x + y,
-    [glob(str(Path(IMAGE_FOLDER) / f"*.{extension}")) 
+    [glob(str(
+        Path(IMAGE_FOLDER) / "2019" / "2019-04"
+        / f"*.{extension}")) 
      for extension in extensions])
 image_files = [Path(x).name for x in image_file_paths]
 
@@ -54,6 +54,7 @@ current_index = 0
 @app.route("/", methods=["GET"])
 def get_image():
     global current_index
+
 
     # Check if we have reached the end of the list
     if current_index == len(image_files):
@@ -100,7 +101,7 @@ def move_image():
 
     import ipdb; ipdb.set_trace();
     
-    year, month = yyyy_mm.split("_")
+    year, month = yyyy_mm.split("-")
 
     # Check if the source file exists
     src_path = Path(IMAGE_FOLDER) / year / yyyy_mm / filename
@@ -115,10 +116,11 @@ def move_image():
         return jsonify({"message": f"{src_path} trashed."})
 
     if choice == "for-logseq":
-        dest_path = Path(FOR_LOGSEQ_FOLDER)  / filename
+        dest_path = Path(FOR_LOGSEQ_FOLDER) / year / yyyy_mm / filename
+        dest_path.mkdir(parents=True, exist_ok=True)
 
     if choice == "other":
-        dest_path = Path(DESTINATION_FOLDER) / filename
+        dest_path = Path(DESTINATION_FOLDER) / year / yyyy_mm / filename
 
     # Create the destination directory if it does not exist
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
@@ -127,7 +129,7 @@ def move_image():
     os.rename(src_path, dest_path)
 
     # Return a success message
-    return jsonify({"message": "File moved successfully"})
+    return jsonify({"message": f"File moved successfully to {dest_path}"})
 
 
 if __name__ == "__main__":
