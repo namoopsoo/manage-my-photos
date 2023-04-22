@@ -13,8 +13,8 @@ CORS(app)
 
 
 # Set the path to the image folder
-IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos"
 IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos/2019/2019-04"
+IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos"
 
 # Set the path to the destination folder
 DESTINATION_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos" 
@@ -23,10 +23,22 @@ DESTINATION_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos/2019/
 
 FOR_LOGSEQ_FOLDER = "/Users/michal/Dropbox/myphotos/for-logseq/2019/2019-04"
 
+# trips 
+TRIPS_FOLDER = "/Users/michal/Dropbox/MyTrips"
+
+# things
+THINGS_FOLDER = "/Users/michal/Dropbox/ThingsDocuments"
+
+# receipts 
+RECEIPTS_FOLDER = "/Users/michal/Dropbox/Receipts "
+
+
+
 FOOD_JOURNAL = "/Users/michal/Dropbox/FoodJournal"
 
 # Get the list of image files
-image_files = Path(IMAGE_FOLDER).glob("*.jpg")
+image_files = (Path(IMAGE_FOLDER) / "2019" / "2019-04"
+               ).glob("*.jpg")
 
 
 extensions = ["jpg", "JPG", "jpeg", "JPEG"]
@@ -76,16 +88,22 @@ def make_response(data):
 @app.route("/", methods=["POST"])
 def move_image():
     # Get the filename and choice from the request data
-    filename = request.json.get("filename")
+    filename = request.json.get("filename").strip("<p>").strip("</p>")
     choice = request.json.get("choice")
+    yyyy_mm = request.json.get("yyyymm")
+    print((filename, choice, yyyy_mm))
 
     # Check if the filename and choice are valid
-    if not filename or not choice:
+    if not filename or not choice or not yyyy_mm:
         payload = {"message": "Invalid request data"}
         return make_response(payload)
 
+    import ipdb; ipdb.set_trace();
+    
+    year, month = yyyy_mm.split("_")
+
     # Check if the source file exists
-    src_path = Path(IMAGE_FOLDER) / filename
+    src_path = Path(IMAGE_FOLDER) / year / yyyy_mm / filename
     if not src_path.exists():
         return jsonify({"message": "File not found"})  # TODO handle this.
 

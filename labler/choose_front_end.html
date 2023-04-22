@@ -35,9 +35,12 @@
       <div>
         <label for="choice">Enter your choice:</label>
         <input type="text" id="choice" name="choice">
+        <label for="choice">yyyy-mm</label>
+        <input type="text" id="yyyymm" name="yyyymm">
         <button id="submit" onclick="submitChoice()">Submit</button>
         <button id="next" onclick="displayNextImage()">Fetch Next</button>
       </div>
+      <div id="response-field"></div>
       <div id="image-container"></div>
       <div>
           hmm
@@ -47,11 +50,13 @@
       // Get a reference to the image container
       const imageContainer = document.getElementById("image-container");
       const imageTitle = document.getElementById("image-title");
+      const yyyyMMContainer = document.getElementById("yyyymm");
+      const choiceContainer = document.getElementById("choice");
       const localDir = "file:///Users/michal/Dropbox/myphotos/2019/2019-04";
+      const responseField = document.getElementById("response-field");
 
       // Create a function to display the next image
       async function displayNextImage() {
-        // Make a GET request to the Flask app to get the next image filename
         const response = await fetch("http://127.0.0.1:5000/", {
             mode: "cors", // dont use "no-cors" !
             headers: {
@@ -80,6 +85,27 @@
 
       // Create a function to submit the choice
       async function submitChoice() {
+          data = {
+              yyyymm: yyyyMMContainer.value,
+              filename: imageTitle.innerHTML,
+              choice: choiceContainer.value,
+          };
+
+          const response = await fetch("http://127.0.0.1:5000/", {
+              mode: "cors", // dont use "no-cors" !
+              method: "POST", 
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  // 'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: JSON.stringify(data), // body data type must match "Content-Type" header
+          });
+          console.log(response);
+
+          const jsonData = await response.json();
+          console.log(jsonData);
+          console.log("sent GET");
       }
 
     </script>
