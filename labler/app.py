@@ -46,22 +46,20 @@ extensions = ["jpg", "JPG", "jpeg", "JPEG"]
 def next_image():
     image_file_paths = reduce(lambda x, y: x + y,
         [glob(str(
-            Path(IMAGE_FOLDER) / "2019" / "2019-04"
+            Path(IMAGE_FOLDER) / "2019" / "2019-04"  # TODO dont hard code.
             / f"*.{extension}")) 
          for extension in extensions])
     image_files = [Path(x).name for x in image_file_paths]
 
-    # Initialize the current index
     i = 0 
     if 0 == len(image_files):
         return None
 
-
     while filename in cache:
         i+= 1
+        filename = image_files[i]
 
-    # Get the filename of the current image
-    filename = image_files[current_index]
+    return filename
 
 @app.route("/", methods=["GET"])
 def get_image():
@@ -113,6 +111,9 @@ def move_image():
         return jsonify({"message": "File not found"})  # TODO handle this.
 
     if choice == "photo-library":
+
+        cache[filename] = 1
+        update_cache()
         return jsonify({"message": "File kept!"})
 
     if choice == "trash":
