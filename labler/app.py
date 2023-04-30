@@ -8,6 +8,11 @@ from pathlib import Path
 
 from flask_cors import CORS
 
+
+cache = json.loads(Path("cache.json"))
+def update_cache():
+    Path("cache.json").write_text(json.dumps(cache))
+
 app = Flask(__name__)
 CORS(app)
 
@@ -17,8 +22,7 @@ IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos/2019/2019-04"
 IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos"
 
 # Set the path to the destination folder
-DESTINATION_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos/2019/2019-04"
-DESTINATION_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos" 
+OTHER_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos" 
 # /Users/michal/Dropbox/FoodJournal/2019/2019-04
 
 FOR_LOGSEQ_FOLDER = "/Users/michal/Dropbox/myphotos/for-logseq"
@@ -35,36 +39,36 @@ RECEIPTS_FOLDER = "/Users/michal/Dropbox/Receipts"
 FOOD_JOURNAL = "/Users/michal/Dropbox/FoodJournal"
 
 # Get the list of image files
-image_files = (Path(IMAGE_FOLDER) / "2019" / "2019-04"
-               ).glob("*.jpg")
-
+# image_files = (Path(IMAGE_FOLDER) / "2019" / "2019-04"
+#                ).glob("*.jpg")
 
 extensions = ["jpg", "JPG", "jpeg", "JPEG"]
-image_file_paths = reduce(lambda x, y: x + y,
-    [glob(str(
-        Path(IMAGE_FOLDER) / "2019" / "2019-04"
-        / f"*.{extension}")) 
-     for extension in extensions])
-image_files = [Path(x).name for x in image_file_paths]
+def next_image():
+    image_file_paths = reduce(lambda x, y: x + y,
+        [glob(str(
+            Path(IMAGE_FOLDER) / "2019" / "2019-04"
+            / f"*.{extension}")) 
+         for extension in extensions])
+    image_files = [Path(x).name for x in image_file_paths]
 
-# Initialize the current index
-current_index = 0
-
-
-@app.route("/", methods=["GET"])
-def get_image():
-    global current_index
+    # Initialize the current index
+    i = 0 
+    if 0 == len(image_files):
+        return None
 
 
-    # Check if we have reached the end of the list
-    if current_index == len(image_files):
-        return jsonify({"message": "No more images to display"})
+    while filename in cache:
+        i+= 1
 
     # Get the filename of the current image
     filename = image_files[current_index]
 
-    # Increment the index for the next request
-    current_index += 1
+@app.route("/", methods=["GET"])
+def get_image():
+
+    filename = next_image()
+    if not filename:
+        return jsonify({"message": "No more images to display"})
 
     # Return the filename as JSON
     # return jsonify()
@@ -117,13 +121,14 @@ def move_image():
 
     if choice == "for-logseq":
         dest_path = Path(FOR_LOGSEQ_FOLDER) / year / yyyy_mm / filename
-        dest_path.mkdir(parents=True, exist_ok=True)
-
-    if choice == "other":
-        dest_path = Path(DESTINATION_FOLDER) / year / yyyy_mm / filename
+    elif choice == "receipt":
+        dest_path = Path(RECEIPTS_FOLDER) / year / yyyy_mm / filename
+    elif choice == "other":
+        dest_path = Path(OTHER_FOLDER) / year / yyyy_mm / filename
 
     # Create the destination directory if it does not exist
-    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    dest_path.mkdir(parents=True, exist_ok=True)
+    # os.makedirs(os.path.dirname(dest_path), exist_ok=True)
 
     # Move the file to the destination directory
     os.rename(src_path, dest_path)
