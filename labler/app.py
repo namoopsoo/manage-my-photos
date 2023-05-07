@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+import re
 from glob import glob
 import flask
 import json
@@ -9,7 +10,7 @@ from pathlib import Path
 from flask_cors import CORS
 
 
-cache = json.loads(Path("cache.json"))
+cache = json.loads(Path("cache.json").read_text())
 def update_cache():
     Path("cache.json").write_text(json.dumps(cache))
 
@@ -43,10 +44,10 @@ FOOD_JOURNAL = "/Users/michal/Dropbox/FoodJournal"
 #                ).glob("*.jpg")
 
 extensions = ["jpg", "JPG", "jpeg", "JPEG"]
-def next_image():
+def next_image(yyyy, mm):
     image_file_paths = reduce(lambda x, y: x + y,
         [glob(str(
-            Path(IMAGE_FOLDER) / "2019" / "2019-04"  # TODO dont hard code.
+            Path(IMAGE_FOLDER) / yyyy / f"{yyyy}-{mm}"
             / f"*.{extension}")) 
          for extension in extensions])
     image_files = [Path(x).name for x in image_file_paths]
@@ -63,6 +64,14 @@ def next_image():
 
 @app.route("/", methods=["GET"])
 def get_image():
+
+    import ipdb; ipdb.set_trace();
+    yyyyMM = request.args.get("yyyyMM")
+    match = re.match(r"^(\d\d\d\d)-(\d\d)$", yyyyMM)
+    if not match:
+        return jsonify({"message": f"oops, {yyyyMM} not following yyyy-mm"})
+    yyyy, mm = match.groups()[0], match.groups()[1]
+    print("yyyy", yyyy, "mm", mm)
 
     filename = next_image()
     if not filename:

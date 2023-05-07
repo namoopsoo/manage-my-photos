@@ -57,8 +57,22 @@
 
       // Create a function to display the next image
       async function displayNextImage() {
-        const response = await fetch("http://127.0.0.1:5000/", {
+
+        if (yyyyMMContainer.value == "") {
+            console.log("blank: ." + yyyyMMContainer.value + ".");
+
+            responseField.innerHTML = `<p>use yyyy-mm.</p>`;
+            return
+        } 
+        else {
+            console.log("have ." + yyyyMMContainer.value + ".");
+        }
+
+        const response = await fetch(
+            "http://127.0.0.1:5000/?yyyyMM=" + yyyyMMContainer.value,
+            {
             mode: "cors", // dont use "no-cors" !
+            method: "GET",
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
