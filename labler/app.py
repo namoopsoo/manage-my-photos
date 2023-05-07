@@ -53,9 +53,9 @@ def next_image(yyyy, mm):
     image_files = [Path(x).name for x in image_file_paths]
 
     i = 0 
-    if 0 == len(image_files):
+    if len(image_files) == 0:
         return None
-
+    filename = image_files[i]
     while filename in cache:
         i+= 1
         filename = image_files[i]
@@ -65,16 +65,17 @@ def next_image(yyyy, mm):
 @app.route("/", methods=["GET"])
 def get_image():
 
-    import ipdb; ipdb.set_trace();
     yyyyMM = request.args.get("yyyyMM")
     match = re.match(r"^(\d\d\d\d)-(\d\d)$", yyyyMM)
     if not match:
+        # TODO error return
         return jsonify({"message": f"oops, {yyyyMM} not following yyyy-mm"})
     yyyy, mm = match.groups()[0], match.groups()[1]
     print("yyyy", yyyy, "mm", mm)
 
-    filename = next_image()
+    filename = next_image(yyyy, mm)
     if not filename:
+        # TODO error return
         return jsonify({"message": "No more images to display"})
 
     # Return the filename as JSON

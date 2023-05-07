@@ -84,10 +84,14 @@
         console.log(jsonData);
         console.log("sent GET");
 
+        responseField.innerHTML = `<p>${jsonData.message}</p>`;
         // Check if there are no more images to display
         if ("filename" in jsonData) {
           imageTitle.innerHTML = `<p>${jsonData.filename}</p>`;
-        };
+        } else { 
+            return;
+
+        }
 
         // Display the image
         const imageUrl = `${localDir}/${jsonData.filename}`;
