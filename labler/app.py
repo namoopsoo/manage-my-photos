@@ -33,7 +33,7 @@ TRIPS_FOLDER = "/Users/michal/Dropbox/MyTrips"
 
 # things
 THINGS_FOLDER = "/Users/michal/Dropbox/ThingsDocuments"
-
+FUNNIES_FOLDER = "/Users/michal/Dropbox/Funnies"
 RECEIPTS_FOLDER = "/Users/michal/Dropbox/Receipts"
 FOOD_JOURNAL = "/Users/michal/Dropbox/FoodJournal"
 
@@ -43,22 +43,22 @@ FOOD_JOURNAL = "/Users/michal/Dropbox/FoodJournal"
 
 extensions = ["jpg", "JPG", "jpeg", "JPEG"]
 def next_image(yyyy, mm):
+    path = Path(IMAGE_FOLDER) / yyyy / f"{yyyy}-{mm}"
     image_file_paths = reduce(lambda x, y: x + y,
-        [glob(str(
-            Path(IMAGE_FOLDER) / yyyy / f"{yyyy}-{mm}"
-            / f"*.{extension}")) 
+        [glob(str( path / f"*.{extension}")) 
          for extension in extensions])
     image_files = [Path(x).name for x in image_file_paths]
 
     i = 0 
     if len(image_files) == 0:
-        return None
-    filename = image_files[i]
-    while filename in cache:
-        i+= 1
-        filename = image_files[i]
-
-    return filename
+        return None, f"no images in {path}."
+    images_not_checked = [x for x in image_files
+                          if x not in cache]
+    if images_not_checked:
+        filename = images_not_checked[0]
+        return filename, "all good here"
+    
+    return None, f"all images already processed, (these are in cache, {image_files[:5]})"
 
 @app.route("/", methods=["GET"])
 def get_image():
@@ -71,10 +71,10 @@ def get_image():
     yyyy, mm = match.groups()[0], match.groups()[1]
     print("yyyy", yyyy, "mm", mm)
 
-    filename = next_image(yyyy, mm)
+    filename, error = next_image(yyyy, mm)
     if not filename:
         # TODO error return
-        return jsonify({"message": "No more images to display"})
+        return jsonify({"message": f"No more images to display , {error}"})
 
     # Return the filename as JSON
     # return jsonify()
@@ -115,7 +115,6 @@ def move_image():
         payload = {"message": f"oops, {yyyyMM} not following yyyy-mm"}
         return make_response(payload)
 
-    import ipdb; ipdb.set_trace();
     
     year, month = yyyy_mm.split("-")
 
@@ -142,6 +141,8 @@ def move_image():
         dest_path = Path(RECEIPTS_FOLDER) / year / yyyy_mm / filename
     elif choice == "trips":
         dest_path = Path(TRIPS_FOLDER) / year / yyyy_mm / filename
+    elif choice == "funnies":
+        dest_path = Path(FUNNIES_FOLDER) / year / yyyy_mm / filename
 
     elif choice == "food":
         dest_path = Path(FOOD_JOURNAL) / year / yyyy_mm / filename
