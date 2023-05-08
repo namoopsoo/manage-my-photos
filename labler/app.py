@@ -34,9 +34,7 @@ TRIPS_FOLDER = "/Users/michal/Dropbox/MyTrips"
 # things
 THINGS_FOLDER = "/Users/michal/Dropbox/ThingsDocuments"
 
-# receipts 
 RECEIPTS_FOLDER = "/Users/michal/Dropbox/Receipts"
-
 FOOD_JOURNAL = "/Users/michal/Dropbox/FoodJournal"
 
 # Get the list of image files
@@ -104,11 +102,17 @@ def move_image():
     filename = request.json.get("filename").strip("<p>").strip("</p>")
     choice = request.json.get("choice")
     yyyy_mm = request.json.get("yyyymm")
-    print((filename, choice, yyyy_mm))
+    print("DEBUG", (filename, choice, yyyy_mm))
 
     # Check if the filename and choice are valid
     if not filename or not choice or not yyyy_mm:
         payload = {"message": "Invalid request data"}
+        return make_response(payload)
+
+    match = re.match(r"^(\d\d\d\d)-(\d\d)$", yyyy_mm)
+    if not match:
+        # TODO error return
+        payload = {"message": f"oops, {yyyyMM} not following yyyy-mm"}
         return make_response(payload)
 
     import ipdb; ipdb.set_trace();
@@ -132,20 +136,32 @@ def move_image():
 
     if choice == "for-logseq":
         dest_path = Path(FOR_LOGSEQ_FOLDER) / year / yyyy_mm / filename
-    elif choice == "receipt":
+    elif choice == "things":
+        dest_path = Path(THINGS_FOLDER) / year / yyyy_mm / filename
+    elif choice == "receipts":
         dest_path = Path(RECEIPTS_FOLDER) / year / yyyy_mm / filename
+    elif choice == "trips":
+        dest_path = Path(TRIPS_FOLDER) / year / yyyy_mm / filename
+
+    elif choice == "food":
+        dest_path = Path(FOOD_JOURNAL) / year / yyyy_mm / filename
+
     elif choice == "other":
         dest_path = Path(OTHER_FOLDER) / year / yyyy_mm / filename
+    else:
+        return jsonify({"message": f"choice {choice} unrecognized."})
+
 
     # Create the destination directory if it does not exist
-    dest_path.mkdir(parents=True, exist_ok=True)
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
     # os.makedirs(os.path.dirname(dest_path), exist_ok=True)
 
     # Move the file to the destination directory
-    os.rename(src_path, dest_path)
+    # os.rename(src_path, dest_path)
+    src_path.replace(dest_path)
 
     # Return a success message
-    return jsonify({"message": f"File moved successfully to {dest_path}"})
+    return jsonify({"message": f"File {src_path} moved successfully to {dest_path}"})
 
 
 if __name__ == "__main__":

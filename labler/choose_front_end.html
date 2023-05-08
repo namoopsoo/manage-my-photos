@@ -37,8 +37,17 @@
         <input type="text" id="choice" name="choice">
         <label for="choice">yyyy-mm</label>
         <input type="text" id="yyyymm" name="yyyymm">
-        <button id="submit" onclick="submitChoice()">Submit</button>
+        <button id="submit" onclick="submitChoice('input')">Submit</button>
         <button id="next" onclick="displayNextImage()">Fetch Next</button>
+
+        <button id="for-logseq" onclick="submitChoice('for-logseq')">For logseq</button>
+        <button id="for-trash" onclick="submitChoice('trash')">For trash</button>
+        <button id="for-keeps" onclick="submitChoice('photo-library')">For keeps</button>
+        <button id="for-receipts" onclick="submitChoice('receipts')">For receipts</button>
+        <button id="for-trips" onclick="submitChoice('trips')">For trips</button>
+        <button id="for-things" onclick="submitChoice('things')">For things</button>
+        <button id="for-food" onclick="submitChoice('food')">For food</button>
+        <button id="for-other" onclick="submitChoice('other')">For other</button>
       </div>
       <div id="response-field"></div>
       <div id="image-container"></div>
@@ -103,12 +112,32 @@
       }
 
       // Create a function to submit the choice
-      async function submitChoice() {
-          data = {
-              yyyymm: yyyyMMContainer.value,
-              filename: imageTitle.innerHTML,
-              choice: choiceContainer.value,
-          };
+      async function submitChoice(param) {
+          console.log("param: " + param);
+
+          if (param == "input") {
+              console.log("one");
+              const the_choice = choiceContainer.value;
+              console.log("the_choice" + the_choice);
+              data = {
+                  yyyymm: yyyyMMContainer.value,
+                  filename: imageTitle.innerHTML,
+                  choice: the_choice,
+              };
+          } else {
+              console.log("two");
+              const the_choice = param;
+              console.log("the_choice " + the_choice);
+              data = {
+                  yyyymm: yyyyMMContainer.value,
+                  filename: imageTitle.innerHTML,
+                  choice: the_choice,
+              };
+          }
+
+          console.log("data");
+          console.log(data);
+          console.log("^^^data");
 
           const response = await fetch("http://127.0.0.1:5000/", {
               mode: "cors", // dont use "no-cors" !
