@@ -60,6 +60,17 @@ def next_image(yyyy, mm):
     
     return None, f"all images already processed, (these are in cache, {image_files[:5]})"
 
+
+@app.route("/choose", methods=["GET"])
+def get_html_front_end():
+    html = Path("./choose_front_end.html").read_text()
+    mimetype = "text/html"
+    response = flask.Response(response=html,
+                              status=200,
+                              mimetype=mimetype)
+    return response
+
+
 @app.route("/", methods=["GET"])
 def get_image():
 
