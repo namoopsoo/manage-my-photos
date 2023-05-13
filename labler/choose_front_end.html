@@ -62,7 +62,7 @@
       const imageTitle = document.getElementById("image-title");
       const yyyyMMContainer = document.getElementById("yyyymm");
       const choiceContainer = document.getElementById("choice");
-      const localDir = "file:///Users/michal/Dropbox/myphotos/2019/2019-04";
+      const localDir = "file:///Users/michal/Dropbox/myphotos";
       const responseField = document.getElementById("response-field");
 
       // Create a function to display the next image
@@ -104,7 +104,8 @@
         }
 
         // Display the image
-        const imageUrl = `${localDir}/${jsonData.filename}`;
+        const yyyy = yyyyMMContainer.value.slice(0, 4);
+        const imageUrl = `${localDir}/${yyyy}/${yyyyMMContainer.value}/${jsonData.filename}`;
         console.log("imageUrl" + imageUrl);
         imageContainer.innerHTML = `<img src="${imageUrl}" alt="${jsonData.filename}">`;
         responseField.innerHTML = `<p>${jsonData.message}</p>`;
