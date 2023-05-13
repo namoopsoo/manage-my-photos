@@ -105,10 +105,13 @@
 
         // Display the image
         const yyyy = yyyyMMContainer.value.slice(0, 4);
-        const imageUrl = `${localDir}/${yyyy}/${yyyyMMContainer.value}/${jsonData.filename}`;
+        const imageUrl = `http://127.0.0.1:5000/image?image_path=${yyyy}/${yyyyMMContainer.value}/${jsonData.filename}`;
         console.log("imageUrl" + imageUrl);
+
+        // const imageData = await response.json();
         imageContainer.innerHTML = `<img src="${imageUrl}" alt="${jsonData.filename}">`;
         responseField.innerHTML = `<p>${jsonData.message}</p>`;
+
 
         return;
       }

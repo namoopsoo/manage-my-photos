@@ -71,8 +71,30 @@ def get_html_front_end():
     return response
 
 
-@app.route("/", methods=["GET"])
+@app.route("/image", methods=["GET"])
 def get_image():
+    image_relative_path = request.args.get("image_path")
+    image_path = (Path(IMAGE_FOLDER) / image_relative_path)
+    if image_path.exists():
+        print("image_path", image_path)
+        image_content = image_path.read_text()
+        extension = image_relative_path.split(".")[-1]
+        mimetype = f"image/{extension}"
+        response = flask.Response(response=image_content,
+                                  status=200,
+                                  mimetype=mimetype)
+        return response
+
+    response = flask.Response(response="oops does not exist",
+                              status=404,
+                              mimetype=mimetype)
+    return response
+
+
+
+
+@app.route("/", methods=["GET"])
+def get_image_metadata():
 
     yyyyMM = request.args.get("yyyyMM")
     match = re.match(r"^(\d\d\d\d)-(\d\d)$", yyyyMM)
