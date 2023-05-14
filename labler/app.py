@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file, abort
 import re
 from glob import glob
 import flask
@@ -8,6 +8,7 @@ from functools import reduce
 from pathlib import Path
 
 from flask_cors import CORS
+from dotenv import load_dotenv
 
 
 cache = json.loads(Path("cache.json").read_text())
@@ -17,29 +18,15 @@ def update_cache():
 app = Flask(__name__)
 CORS(app)
 
+IMAGE_FOLDER = os.getenv("IMAGE_FOLDER")
+OTHER_FOLDER = os.getenv("OTHER_FOLDER")
+FOR_LOGSEQ_FOLDER = os.getenv("FOR_LOGSEQ_FOLDER")
+TRIPS_FOLDER = os.getenv("TRIPS_FOLDER") 
+THINGS_FOLDER = os.getenv("THINGS_FOLDER")
+FUNNIES_FOLDER = os.getenv("FUNNIES_FOLDER")
+RECEIPTS_FOLDER = os.getenv("RECEIPTS_FOLDER")
+FOOD_JOURNAL = os.getenv("FOOD_JOURNAL")
 
-# Set the path to the image folder
-IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos/2019/2019-04"
-IMAGE_FOLDER = "/Users/michal/Dropbox/myphotos"
-
-# Set the path to the destination folder
-OTHER_FOLDER = "/Users/michal/Dropbox/myphotos/not-for-icloud-photos" 
-# /Users/michal/Dropbox/FoodJournal/2019/2019-04
-
-FOR_LOGSEQ_FOLDER = "/Users/michal/Dropbox/myphotos/for-logseq"
-
-# trips 
-TRIPS_FOLDER = "/Users/michal/Dropbox/MyTrips"
-
-# things
-THINGS_FOLDER = "/Users/michal/Dropbox/ThingsDocuments"
-FUNNIES_FOLDER = "/Users/michal/Dropbox/Funnies"
-RECEIPTS_FOLDER = "/Users/michal/Dropbox/Receipts"
-FOOD_JOURNAL = "/Users/michal/Dropbox/FoodJournal"
-
-# Get the list of image files
-# image_files = (Path(IMAGE_FOLDER) / "2019" / "2019-04"
-#                ).glob("*.jpg")
 
 extensions = ["jpg", "JPG", "jpeg", "JPEG"]
 def next_image(yyyy, mm):
@@ -74,23 +61,16 @@ def get_html_front_end():
 @app.route("/image", methods=["GET"])
 def get_image():
     image_relative_path = request.args.get("image_path")
+    if not image_relative_path:
+        abort(400)
+    extension = image_relative_path.split(".")[-1]
     image_path = (Path(IMAGE_FOLDER) / image_relative_path)
     if image_path.exists():
         print("image_path", image_path)
-        image_content = image_path.read_text()
-        extension = image_relative_path.split(".")[-1]
         mimetype = f"image/{extension}"
-        response = flask.Response(response=image_content,
-                                  status=200,
-                                  mimetype=mimetype)
-        return response
+        return send_file(image_path, mimetype=mimetype)
 
-    response = flask.Response(response="oops does not exist",
-                              status=404,
-                              mimetype=mimetype)
-    return response
-
-
+    abort(404)
 
 
 @app.route("/", methods=["GET"])
@@ -110,7 +90,6 @@ def get_image_metadata():
         return jsonify({"message": f"No more images to display , {error}"})
 
     # Return the filename as JSON
-    # return jsonify()
     payload = {"filename": filename}
 
     return make_response(payload)
@@ -188,10 +167,8 @@ def move_image():
 
     # Create the destination directory if it does not exist
     dest_path.parent.mkdir(parents=True, exist_ok=True)
-    # os.makedirs(os.path.dirname(dest_path), exist_ok=True)
 
     # Move the file to the destination directory
-    # os.rename(src_path, dest_path)
     src_path.replace(dest_path)
 
     # Return a success message
