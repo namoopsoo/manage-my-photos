@@ -68,6 +68,9 @@
       // Create a function to display the next image
       async function displayNextImage() {
 
+        // clear tags,
+        tagsContainer.value = "";
+
         if (yyyyMMContainer.value == "") {
             console.log("blank: ." + yyyyMMContainer.value + ".");
 
@@ -153,8 +156,6 @@
 
           responseField.innerHTML = `<p>${jsonData.message}</p>`;
 
-          // clear tags,
-          tagsContainer.innerHTML = ``;
 
           // auto click this 
           displayNextImage();
