@@ -33,9 +33,9 @@
       </div>
       <div id="image-title"></div>
       <div>
-        <label for="choice">Enter your choice:</label>
-        <input type="text" id="choice" name="choice">
-        <label for="choice">yyyy-mm</label>
+        <label for="tags">Enter tags:</label>
+        <input type="text" id="tags" name="tags">
+        <label for="yyyymm">yyyy-mm</label>
         <input type="text" id="yyyymm" name="yyyymm">
         <button id="submit" onclick="submitChoice('input')">Submit</button>
         <button id="next" onclick="displayNextImage()">Fetch Next</button>
@@ -61,7 +61,7 @@
       const imageContainer = document.getElementById("image-container");
       const imageTitle = document.getElementById("image-title");
       const yyyyMMContainer = document.getElementById("yyyymm");
-      const choiceContainer = document.getElementById("choice");
+      const tagsContainer = document.getElementById("tags");
       const localDir = "file:///Users/michal/Dropbox/myphotos";
       const responseField = document.getElementById("response-field");
 
@@ -120,25 +120,16 @@
       async function submitChoice(param) {
           console.log("param: " + param);
 
-          if (param == "input") {
-              console.log("one");
-              const the_choice = choiceContainer.value;
-              console.log("the_choice" + the_choice);
-              data = {
-                  yyyymm: yyyyMMContainer.value,
-                  filename: imageTitle.innerHTML,
-                  choice: the_choice,
-              };
-          } else {
-              console.log("two");
-              const the_choice = param;
-              console.log("the_choice " + the_choice);
-              data = {
-                  yyyymm: yyyyMMContainer.value,
-                  filename: imageTitle.innerHTML,
-                  choice: the_choice,
-              };
-          }
+          const the_tags = tagsContainer.value;
+          console.log("the_tags" + the_tags);
+          const the_choice = param;
+          console.log("the_choice " + the_choice);
+          data = {
+              yyyymm: yyyyMMContainer.value,
+              filename: imageTitle.innerHTML,
+              choice: the_choice,
+              tags: the_tags,
+          };
 
           console.log("data");
           console.log(data);
@@ -161,6 +152,12 @@
           console.log("sent GET");
 
           responseField.innerHTML = `<p>${jsonData.message}</p>`;
+
+          // clear tags,
+          tagsContainer.innerHTML = ``;
+
+          // auto click this 
+          displayNextImage();
       }
 
     </script>

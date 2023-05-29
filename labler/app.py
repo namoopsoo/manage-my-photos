@@ -4,6 +4,7 @@ from glob import glob
 import flask
 import json
 import os
+import random
 from functools import reduce
 from pathlib import Path
 
@@ -42,7 +43,7 @@ def next_image(yyyy, mm):
     images_not_checked = [x for x in image_files
                           if x not in cache]
     if images_not_checked:
-        filename = images_not_checked[0]
+        filename = random.choices(images_not_checked)[0]
         return filename, "all good here"
     
     return None, f"all images already processed, (these are in cache, {image_files[:5]})"
@@ -108,11 +109,17 @@ def make_response(data):
 
     return response
 
+def make_metadata_path(path):
+    return path.with_suffix(
+        ".json").with_stem(path.stem + "-metadata")
+
 @app.route("/", methods=["POST"])
 def move_image():
     # Get the filename and choice from the request data
     filename = request.json.get("filename").strip("<p>").strip("</p>")
     choice = request.json.get("choice")
+    # import ipdb; ipdb.set_trace()
+    tags = request.json.get("tags")
     yyyy_mm = request.json.get("yyyymm")
     print("DEBUG", (filename, choice, yyyy_mm))
 
@@ -139,6 +146,9 @@ def move_image():
 
         cache[filename] = 1
         update_cache()
+        if tags:
+            metadata_path = make_metadata_path(src_path)
+            metadata_path.write_text(json.dumps({"tags": tags}))
         return jsonify({"message": "File kept!"})
 
     if choice == "trash":
@@ -170,6 +180,11 @@ def move_image():
 
     # Move the file to the destination directory
     src_path.replace(dest_path)
+
+    # Write metadata file too
+    if tags:
+        metadata_path = make_metadata_path(dest_path)
+        metadata_path.write_text(json.dumps({"tags": tags}))
 
     # Return a success message
     return jsonify({"message": f"File {src_path} moved successfully to {dest_path}"})
