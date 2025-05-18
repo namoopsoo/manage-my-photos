@@ -181,6 +181,8 @@ def move_image():
     # Move the file to the destination directory
     src_path.replace(dest_path)
 
+    print("DEBUG", src_path, "->", dest_path)
+
     # Write metadata file too
     if tags:
         metadata_path = make_metadata_path(dest_path)
