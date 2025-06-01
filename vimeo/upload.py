@@ -55,7 +55,7 @@ def upload(local_path):
     )
     print("response", response.json())
 
-    approach = response.json()["approach"]
+    approach = response.json()["upload"]["approach"]
     if approach != "tus":
         print("oops")
         return
