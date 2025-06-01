@@ -6,6 +6,10 @@ from pathlib import Path
 import requests
 
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 def bake_options():
     return [
         [['--dry-run', '-D'],
