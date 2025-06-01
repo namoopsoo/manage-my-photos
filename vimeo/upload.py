@@ -51,7 +51,7 @@ def upload(local_path):
             "Content-Type": "application/json",
             "Accept": "application/vnd.vimeo.*+json;version=3.4",
         },
-        json=json.dumps({"upload": {"approach": "tus", "size": str(file_size_bytes)}})
+        json=({"upload": {"approach": "tus", "size": str(file_size_bytes)}})
     )
     print("response", response.json())
 
