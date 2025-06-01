@@ -33,4 +33,4 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: CDK Deploy
-        run: cdk deploy --require-approval never
+        run: cdk deploy Ec2ControlApiStack --require-approval never
