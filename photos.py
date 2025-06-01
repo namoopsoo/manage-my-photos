@@ -1,6 +1,5 @@
 import os
 import polars as pl
-# os.listdir("/Users/michal/Pictures/Photos Library.photoslibrary/originals/1")
 
 
 import sqlite3
