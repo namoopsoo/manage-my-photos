@@ -1,5 +1,5 @@
 
-name: Deploy CDK Stack
+name: Deploy ec2 start stop CDK Stack
 
 on:
   workflow_dispatch:
