@@ -55,3 +55,10 @@ def get_original_names():
     # return vec
     df = pl.from_dicts(vec) # .select(cols)
     return df
+
+def get_primary():
+    sql = "select * from Z_METADATA "
+    vec = query(sql)
+    # return vec
+    df = pl.from_dicts(vec) # .select(cols)
+    return df
