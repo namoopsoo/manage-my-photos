@@ -26,11 +26,14 @@ jobs:
       - name: Install AWS CDK
         run: npm install -g aws-cdk
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID}}:role/YOUR_GITHUB_ROLE
-          aws-region: ${{ secrets.AWS_REGION }}
+      #      - name: Configure AWS credentials
+      #        uses: aws-actions/configure-aws-credentials@v4
+      #        with:
+      #          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID}}:role/YOUR_GITHUB_ROLE
+      #          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: CDK Deploy
         run: cdk deploy Ec2ControlApiStack --require-approval never
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
