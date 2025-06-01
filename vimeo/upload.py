@@ -72,7 +72,7 @@ def upload(local_path):
         data=Path(local_path).read_bytes(),
     )
 
-    print("patch_response", patch_response)
+    print("patch_response", patch_response, patch_response.status_code)
     print("bye")
 
 if __name__ == "__main__":
