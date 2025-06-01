@@ -12,9 +12,9 @@ load_dotenv()
 
 def bake_options():
     return [
-        [['--dry-run', '-D'],
+        [['--trace', '-t'],
             {'action': 'store_true',
-                'help': 'Dry run. Just print the command.'},],
+                'help': 'trace.'},],
 
         [['--local-path', '-l'],
             {'action': 'store',
@@ -33,7 +33,7 @@ def read_kwargs():
 
 def get_file_size(path):
 
-    file_path = Path("/path/to/your/video.mp4")
+    file_path = Path(path)
     file_size_bytes = file_path.stat().st_size
 
     return file_size_bytes
@@ -77,6 +77,9 @@ def upload(local_path):
 
 if __name__ == "__main__":
     args = read_kwargs()
+    if args["trace"]:
+        import ipdb; ipdb.set_trace()
+
     path = args["local_path"]
     upload(path)
     ...
