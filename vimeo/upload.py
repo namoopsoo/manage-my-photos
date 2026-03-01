@@ -74,7 +74,8 @@ def upload(local_path, name=None, description=None):
         },
         json=request_payload
     )
-    print("response", response.json())
+    
+    print("POST response", response.status_code)
 
     approach = response.json()["upload"]["approach"]
     if approach != "tus":
@@ -82,6 +83,7 @@ def upload(local_path, name=None, description=None):
         return
 
     upload_link_url = response.json()["upload"]["upload_link"]
+    print("upload_link_url", upload_link_url)
 
     patch_response = requests.patch(
         url=upload_link_url,
