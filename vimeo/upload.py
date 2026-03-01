@@ -19,6 +19,14 @@ def bake_options():
         [['--local-path', '-l'],
             {'action': 'store',
                 'help': 'path of file to upload'},],
+
+        [['--name', '-n'],
+            {'action': 'store',
+                'help': 'optional video name'},],
+
+        [['--description', '-d'],
+            {'action': 'store',
+                'help': 'optional video description'},],
     ]
 
 def read_kwargs():
@@ -38,10 +46,23 @@ def get_file_size(path):
 
     return file_size_bytes
 
-def upload(local_path):
+def upload(local_path, name=None, description=None):
 
     TOKEN = os.getenv("VIMEO_TOKEN")
     file_size_bytes = get_file_size(local_path)
+
+    request_payload = {
+        "upload": {
+            "approach": "tus",
+            "size": str(file_size_bytes),
+        }
+    }
+
+    if name is not None:
+        request_payload["name"] = name
+
+    if description is not None:
+        request_payload["description"] = description
 
     # step 1: create an upload uri
     response = requests.post(
@@ -51,7 +72,7 @@ def upload(local_path):
             "Content-Type": "application/json",
             "Accept": "application/vnd.vimeo.*+json;version=3.4",
         },
-        json=({"upload": {"approach": "tus", "size": str(file_size_bytes)}})
+        json=request_payload
     )
     print("response", response.json())
 
@@ -81,5 +102,5 @@ if __name__ == "__main__":
         import ipdb; ipdb.set_trace()
 
     path = args["local_path"]
-    upload(path)
+    upload(path, name=args["name"], description=args["description"])
     ...
